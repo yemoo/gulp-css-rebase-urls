@@ -34,7 +34,7 @@ module.exports = function(options) {
     return through.obj(function(file, enc, cb) {
         var css = rebaseUrls(file.contents.toString(), {
             currentDir: path.dirname(file.path),
-            root: path.join(file.cwd, root)
+            root: isAbsolute(cwd) ? root : path.join(file.cwd, root)
         });
 
         file.contents = new Buffer(css);
