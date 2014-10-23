@@ -2,6 +2,7 @@ var rework = require('rework');
 var path = require('path');
 var through = require('through2');
 var validator = require('validator');
+var url = require('rework-plugin-url');
 
 var isAbsolute = function(p) {
     var normal = path.normalize(p);
@@ -11,15 +12,19 @@ var isAbsolute = function(p) {
 
 var rebaseUrls = function(css, options) {
     return rework(css)
-        .use(rework.url(function(url){
+        .use(url(function(url) {
             if (isAbsolute(url) && validator.isURL(url)) {
                 return url;
             }
+
             var absolutePath = path.join(options.currentDir, url)
             var p = path.relative(options.root, absolutePath);
 
             if (process.platform === 'win32') {
                 p = p.replace(/\\/g, '/');
+            }
+            if (p[0] !== '/') {
+                p = '/' + p;
             }
 
             return p;
@@ -34,7 +39,7 @@ module.exports = function(options) {
     return through.obj(function(file, enc, cb) {
         var css = rebaseUrls(file.contents.toString(), {
             currentDir: path.dirname(file.path),
-            root: isAbsolute(cwd) ? root : path.join(file.cwd, root)
+            root: isAbsolute(root) ? root : path.join(file.cwd, root)
         });
 
         file.contents = new Buffer(css);
